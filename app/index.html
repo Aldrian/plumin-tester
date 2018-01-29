@@ -1,0 +1,317 @@
+<!doctype html>
+<html class="no-js" lang="">
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>pluminTester</title>
+
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <!-- Place favicon.ico in the root directory -->
+
+    <!-- build:css styles/vendor.css -->
+    <!-- bower:css -->
+    <link rel="stylesheet" href="/bower_components/spectrum/spectrum.css" />
+    <!-- endbower -->
+    <!-- endbuild -->
+
+    <!-- build:css styles/main.css -->
+    <link rel="stylesheet" href="styles/main.css">
+    <!-- endbuild -->
+    
+    <!-- build:js scripts/vendor/modernizr.js -->
+    <script src="/bower_components/modernizr/modernizr.js"></script>
+    <!-- endbuild -->
+  </head>
+  <body>
+    <!--[if IE]>
+      <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+    
+    <div class="container">
+      <div class="header">
+          <ul class="nav nav-pills pull-right">
+              <li class="js-hideConfig">
+                <a href="#">Hide config</a>
+              </li>
+              <li class="js-interpolate">
+                <a href="#">Interpolate</a>
+              </li>
+            </ul>
+        <h3 class="text-muted">pluminTester</h3>
+      </div>
+    
+      <div class="jumbotron">
+        <div class="row">      
+          <div class="col-sm-12">
+              <h2>Configuration :</h2>
+              <hr/>
+          </div>          
+          <div class="col-sm-6">
+              <p>Text color : <input id='colorpicker-text' /></p>
+          </div>
+          <div class="col-sm-6">
+              <p>Background color : <input id='colorpicker-bg' /></p>
+          </div>
+          <div class="col-sm-12">
+              <p>Font-size:
+                  <input id="input-fontSize" type="range" step="5" min="10" max="300" value="70" />
+                </p>
+          </div>
+          <div class="col-sm-6">
+              <p>Tick (ms): <input id="plumin-tick" type="number" step="5"/></p>
+          </div>
+          <div class="col-sm-6">
+              <p>Value by tick <input id="plumin-tickValue" step="0.01" type="number"/></p>
+          </div>
+          <div class="col-sm-12">
+              <p>Plumin:
+                  <input id="js-plumin" type="range" step="0.01" min="0" max="1" value="0" oninput="_interpolate(this.value);" />
+                </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row marketing">
+      <div class="col-lg-12">
+        <div class="plumin-content">
+          <canvas id="hidden-canvas" width="1024" height="1024" hidden></canvas>
+          <div class="plumin-text" id="plumin">Hello Prototypo</div>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="footer">
+        <p>♥ from Prototypo</p>
+      </div>
+    </div>
+
+    <!-- build:js scripts/vendor.js -->
+    <!-- bower:js -->
+    <script src="/bower_components/jquery/dist/jquery.js"></script>
+    <script src="/bower_components/modernizr/modernizr.js"></script>
+    <script src="/bower_components/spectrum/spectrum.js"></script>
+    <!-- endbower -->
+    <!-- endbuild -->
+    
+    <!-- build:js scripts/plugins.js -->
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/affix.js"></script>
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/alert.js"></script>
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/dropdown.js"></script>
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/tooltip.js"></script>
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/modal.js"></script>
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/transition.js"></script>
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/button.js"></script>
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/popover.js"></script>
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/carousel.js"></script>
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/scrollspy.js"></script>
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/collapse.js"></script>
+    <script src="/bower_components/bootstrap-sass/assets/javascripts/bootstrap/tab.js"></script>
+    <!-- endbuild -->
+    
+    <!-- build:js scripts/main.js -->
+    <script src="scripts/main.js"></script>
+    <!-- endbuild -->
+
+    <script src="scripts/lib/plumin.js"></script>
+    <script>
+			plumin.paper.setup('hidden-canvas');
+
+			var _URL = window.URL || window.webkitURL,
+				lastBuffer,
+				lastSubset,
+				pluminSource,
+				lightBuffer,
+				heavyBuffer,
+				worker,
+				// this font will be used for its addToFonts method
+				font = new plumin.Font({
+					familyName: 'Demo'
+				});
+
+			_get('scripts/lib/plumin.js', 'text', function(response) {
+				pluminSource = response;
+				if ( pluminSource && lightBuffer && heavyBuffer ) {
+					_initWorker();
+				}
+			});
+
+			_get('fonts/font1.otf', 'arraybuffer', function(response) {
+				lightBuffer = response;
+				if ( pluminSource && lightBuffer && heavyBuffer ) {
+					_initWorker();
+				}
+			});
+
+			_get('fonts/font2.otf', 'arraybuffer', function(response) {
+				heavyBuffer = response;
+				if ( pluminSource && lightBuffer && heavyBuffer ) {
+					_initWorker();
+				}
+			});
+
+			function _get(url, type, cb) {
+				var xhr = new XMLHttpRequest();
+				xhr.open('get', url, true);
+				xhr.responseType = type;
+				xhr.onload = function () {
+					if ( this.status === 200 ) {
+						cb( this.response );
+					}
+				};
+				xhr.send();
+			}
+
+			function _initWorker() {				
+				// Create a worker using the inline script tag below
+				// (only to avoid adding one more file to the project)
+				worker = new Worker(
+					_URL.createObjectURL( new Blob(
+						[document.getElementById('workerscript')
+							.textContent
+							.replace('PLUMINSOURCE', pluminSource)],
+						{type: "text/javascript"}
+					))
+				);
+
+				worker.postMessage(
+					// message
+					[lightBuffer, heavyBuffer],
+					// transfer list
+					[lightBuffer, heavyBuffer]
+				);
+
+				// send initial subset
+				worker.postMessage(
+					lastSubset = _subsetFromText(
+						'Hello Prototypo'
+					)
+				);
+
+				worker.onmessage = function(e) {
+					lastBuffer = e.data;
+					font.addToFonts( lastBuffer );
+				};
+			}
+
+			function _subsetFromText( text ) {
+				return text.split('')
+					.filter(function(e, i, arr) {
+						return arr.lastIndexOf(e) === i;
+					})
+					.sort()
+					.join('');
+			}
+
+			// TODO: throttle calls
+			function _interpolate( value ) {
+				if ( !worker ) {
+					return;
+				}
+
+				var w=window,
+					d=document,
+					e=d.documentElement,
+					g=d.getElementsByTagName('body')[0],
+					x=w.innerWidth||e.clientWidth||g.clientWidth,
+					y=w.innerHeight||e.clientHeight||g.clientHeight;
+					mouseX = g.scrollLeft;
+				worker.postMessage( +value );
+			}
+
+			// TODO: throttle calls
+			function _subset( value ) {
+				var tmp = _subsetFromText( value );
+
+				if ( tmp !== lastSubset ) {
+					worker.postMessage( lastSubset = tmp );
+				}
+			}
+
+			function _download() {
+				return lastBuffer ?
+					font.download( lastBuffer ):
+					window.font
+						.updateOTCommands()
+						.download();
+			}
+		</script>
+
+		<script id="workerscript" type="text/workerscript">
+			var otFont,
+				otFont0,
+				otFont1,
+				font,
+				font0,
+				font1,
+				coef = 0;
+
+			// importScripts doesn't work with inline worker.
+			// The following placeholder will be replaced with plumin source.
+			// You wouldn't use inline workers and this trick in prod, though.
+			PLUMINSOURCE
+
+			plumin.paper.install(this);
+			plumin.paper.setup({
+				width: 1024,
+				height: 1024
+			});
+
+			// Overwrite addToFonts to send the buffer over to the UI
+			plumin.paper.Font.prototype.addToFonts = function() {
+				var buffer = this.ot.toArrayBuffer();
+				postMessage( buffer, [buffer] );
+			};
+
+			onmessage = function( message ) {
+				var data = message.data;
+
+				switch ( typeof data ) {
+				// parse incoming .otf ArrayBuffers
+				case 'object':
+					if ( !data[0] || data[0].constructor !== ArrayBuffer ) {
+						return;
+					}
+
+					otFont = plumin.opentype.parse( data[0] );
+					otFont0 = plumin.opentype.parse( data[0] );
+					otFont1 = plumin.opentype.parse( data[1] );
+
+					font = new plumin.paper.Font();
+					// save default encoding
+					var encoding = font.ot.encoding;
+					font.importOT( otFont );
+					font.ot.familyName = 'Demo';
+					font.ot.encoding = encoding;
+
+					font0 = new plumin.paper.Font();
+					font0.importOT( otFont0 );
+					font0.ot.familyName = 'font0';
+
+					font1 = new plumin.paper.Font();
+					font1.importOT( otFont1 );
+					font1.ot.familyName = 'font1';
+					break;
+
+				// parse incoming subset
+				case 'string':
+          // TODO: optimize to only interpolate new glyphs added to the subset
+					font.subset = data;
+					font.interpolate(font0, font1, coef);
+					font.updateOTCommands();
+					font.addToFonts();
+					break;
+
+				// parse incoming interpolation coef
+        case 'number':
+          coef = data;
+					font.interpolate(font0, font1, coef);
+					font.updateOTCommands();
+					font.addToFonts();
+					break;
+				}
+			};
+		</script>
+  </body>
+</html>
